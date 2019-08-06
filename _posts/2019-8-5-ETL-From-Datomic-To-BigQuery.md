@@ -1,7 +1,7 @@
 ---
 layout: post
 title: ETL from Datomic to BigQuery
-# author: jchen
+author: Jeff Chen
 tags: datomic,bigquery,etl,streaming
 ---
 
@@ -17,7 +17,7 @@ In this post, we'll cover:
 - [Converting Datomic entities into BigQuery rows](#converting-entities-to-rows)
 - [Streaming changed entities to BigQuery](#streaming-datomic-changes-to-bigquery)
 
-## What's the schema?
+## [What's the schema?](#whats-the-schema)
 
 Let's get started with a simple Datomic schema. We have a couple entity types:
 
@@ -25,7 +25,7 @@ Let's get started with a simple Datomic schema. We have a couple entity types:
 - An `email` has an email address and a set of login tokens.
 - Each (life insurance) `application` has a list of `answers`.
 
-```clojure=
+```clojure
 (def datomic-schema
   [{:db/ident :user/id
     :db/valueType :db.type/uuid
@@ -64,7 +64,7 @@ Unlike SQL (and BigQuery) rows, any Datomic entity can have any attribute in the
 
 First, let's define a function to categorize an entity based on its attributes:
 
-```clojure=
+```clojure
 (def attribute->entity-type
   {:user/id :user
    :app/id :application
@@ -88,7 +88,7 @@ First, let's define a function to categorize an entity based on its attributes:
 
 Next, we need a way to transform a Datomic entity into a BigQuery row given its type:
 
-```clojure=
+```clojure
 (defmulti entity->row* (fn [entity] (classify-entity entity)))
 
 (defmethod entity->row* :email
@@ -117,7 +117,7 @@ Next, we need a way to transform a Datomic entity into a BigQuery row given its 
 
 That's it! To run a single ETL job, all that's left is to run `entity->row` against every entity in the database and upload the result to BigQuery:
 
-```clojure=
+```clojure
 (defn db->rows
   [db]
   (->> (q '[:find (distinct ?e) . :where [?e]] db)
@@ -130,7 +130,7 @@ Eventually, we'll outgrow a daily ETL job. With more data, the job will take man
 
 Datomic [stores a log](https://docs.datomic.com/on-prem/log.html) of all transaction data in time order. This lets us efficiently ask the question "What changed betweeen `t1` and `t2`?" with [`tx-range`](https://docs.datomic.com/on-prem/clojure/index.html#datomic.api/tx-range). With this primitive, we can upload only those entities that have changed since the last time we ran our ETL job. In fact, we can go one step further: by running our upload function in a tight loop, we can achieve data latency of just a few seconds! Let's sketch it out:
 
-```clojure=
+```clojure
 (defn upload-changed-entities-to-bigquery
   [db last-streamed-t]
   (let [last-t (db/next-t db)

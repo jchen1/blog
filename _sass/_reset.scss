@@ -1,3 +1,4 @@
+@import url('https://rsms.me/inter/inter.css');
 
 /***************/
 /* MEYER RESET */
@@ -27,9 +28,6 @@ time, mark, audio, video {
 article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
 	display: block;
-}
-body {
-	line-height: 1;
 }
 ol, ul {
 	list-style: none;
